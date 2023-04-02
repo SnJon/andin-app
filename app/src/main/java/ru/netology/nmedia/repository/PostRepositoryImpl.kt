@@ -10,12 +10,13 @@ import ru.netology.nmedia.dto.Post
 import java.util.concurrent.TimeUnit
 
 
-class PostRepositoryImpl: PostRepository {
+class PostRepositoryImpl : PostRepository {
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
         .build()
     private val gson = Gson()
-    private val typeToken = object : TypeToken<List<Post>>() {}
+    private val listToken = object : TypeToken<List<Post>>() {}
+    private val postToken = object : TypeToken<Post>() {}
 
     companion object {
         private const val BASE_URL = "http://10.0.2.2:9999"
@@ -30,13 +31,31 @@ class PostRepositoryImpl: PostRepository {
         return client.newCall(request)
             .execute()
             .let { it.body?.string() ?: throw RuntimeException("body is null") }
-            .let {
-                gson.fromJson(it, typeToken.type)
-            }
+            .let { gson.fromJson(it, listToken.type) }
     }
 
-    override fun likeById(id: Long) {
-        // TODO: do this in homework
+    override fun likeById(id: Long): Post {
+        val request: Request = Request.Builder()
+            .post(gson.toJson(id).toRequestBody(jsonType))
+            .url("${BASE_URL}/api/slow/posts/${id}/likes")
+            .build()
+
+        return client.newCall(request)
+            .execute()
+            .let { it.body?.string() ?: throw RuntimeException("body is null") }
+            .let { gson.fromJson(it, postToken.type) }
+    }
+
+    override fun unLikeById(id: Long): Post {
+        val request: Request = Request.Builder()
+            .delete(gson.toJson(id).toRequestBody(jsonType))
+            .url("${BASE_URL}/api/slow/posts/${id}/likes")
+            .build()
+
+        return client.newCall(request)
+            .execute()
+            .let { it.body?.string() ?: throw RuntimeException("body is null") }
+            .let { gson.fromJson(it, postToken.type) }
     }
 
     override fun save(post: Post) {

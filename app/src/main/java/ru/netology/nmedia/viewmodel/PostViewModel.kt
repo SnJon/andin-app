@@ -70,8 +70,31 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         edited.value = edited.value?.copy(content = text)
     }
 
-    fun likeById(id: Long) {
-        thread { repository.likeById(id) }
+    fun onLikeClicked(post: Post) {
+        val userActionPost = post.copy(likedByMe = !post.likedByMe)
+        thread {
+            val updatedPost = if (userActionPost.likedByMe) {
+                repository.likeById(userActionPost.id)
+
+            } else {
+                repository.unLikeById(userActionPost.id)
+            }
+            updatePost(updatedPost)
+        }
+    }
+
+    private fun updatePost(post: Post) {
+        val feedModel = _data.value
+        if (feedModel?.isContentShowed() == true) {
+            val postIndex = feedModel.posts.toMutableList().indexOfFirst { oldPost ->
+                oldPost.id == post.id
+            }
+            if (postIndex != -1) {
+                val updatedPosts = feedModel.posts.toMutableList()
+                updatedPosts[postIndex] = post
+                _data.postValue(feedModel.copy(posts = updatedPosts))
+            }
+        }
     }
 
     fun removeById(id: Long) {

@@ -8,4 +8,8 @@ data class FeedModel(
     val error: Boolean = false,
     val empty: Boolean = false,
     val refreshing: Boolean = false,
-)
+) {
+    fun isContentShowed(): Boolean {
+        return !loading && !error && !refreshing && !empty
+    }
+}
