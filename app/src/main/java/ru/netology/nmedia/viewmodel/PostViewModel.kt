@@ -6,8 +6,6 @@ import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.repository.*
 import ru.netology.nmedia.util.SingleLiveEvent
-import java.io.IOException
-import kotlin.concurrent.thread
 
 private val empty = Post(
     id = 0, content = "", author = "", likedByMe = false, likes = 0, published = ""
@@ -44,10 +42,15 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun save() {
         edited.value?.let {
-            thread {
-                repository.save(it)
-                _postCreated.postValue(Unit)
-            }
+            repository.save(it, object : PostRepository.PostsCallback<Unit> {
+                override fun onSuccess(data: Unit) {
+                    _postCreated.postValue(data)
+                }
+
+                override fun onError(e: Exception) {
+                    _data.postValue(FeedModel(error = true))
+                }
+            })
         }
         edited.value = empty
     }
@@ -74,7 +77,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 override fun onError(e: Exception) {
-               _data.postValue(FeedModel(error = true))
+                    _data.postValue(FeedModel(error = true))
                 }
             })
         } else {
@@ -106,16 +109,20 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun removeById(id: Long) {
-        thread {
-            // Оптимистичная модель
-            val old = _data.value?.posts.orEmpty()
-            _data.postValue(_data.value?.copy(
-                posts = _data.value?.posts.orEmpty().filter { it.id != id }))
-            try {
-                repository.removeById(id)
-            } catch (e: IOException) {
+        // Оптимистичная модель
+        val old = _data.value?.posts.orEmpty()
+
+        repository.removeById(id, object : PostRepository.PostsCallback<Unit> {
+            override fun onSuccess(data: Unit) {
+                _data.postValue(
+                    _data.value?.copy(
+                        posts = _data.value?.posts.orEmpty().filter { it.id != id })
+                )
+            }
+
+            override fun onError(e: Exception) {
                 _data.postValue(_data.value?.copy(posts = old))
             }
-        }
+        })
     }
 }

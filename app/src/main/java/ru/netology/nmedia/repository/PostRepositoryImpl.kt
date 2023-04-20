@@ -120,25 +120,55 @@ class PostRepositoryImpl : PostRepository {
             })
     }
 
-    override fun save(post: Post) {
+    override fun save(post: Post, callback: PostRepository.PostsCallback<Unit>) {
         val request: Request = Request.Builder()
             .post(gson.toJson(post).toRequestBody(jsonType))
             .url("${BASE_URL}/api/slow/posts")
             .build()
 
         client.newCall(request)
-            .execute()
-            .close()
+            .enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    callback.onError(e)
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    if (!response.isSuccessful) {
+                        callback.onError(Exception(response.message))
+                    } else {
+                        try {
+                            callback.onSuccess(Unit)
+                        } catch (e: Exception) {
+                            callback.onError(e)
+                        }
+                    }
+                }
+            })
     }
 
-    override fun removeById(id: Long) {
+    override fun removeById(id: Long, callback: PostRepository.PostsCallback<Unit>) {
         val request: Request = Request.Builder()
             .delete()
             .url("${BASE_URL}/api/slow/posts/$id")
             .build()
 
         client.newCall(request)
-            .execute()
-            .close()
+            .enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    callback.onError(e)
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    if (!response.isSuccessful) {
+                        callback.onError(Exception(response.message))
+                    } else {
+                        try {
+                            callback.onSuccess(Unit)
+                        } catch (e: Exception) {
+                            callback.onError(e)
+                        }
+                    }
+                }
+            })
     }
 }
