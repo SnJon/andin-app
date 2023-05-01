@@ -52,6 +52,7 @@ class PostViewHolder(
 
             Glide.with(avatar.context)
                 .load(url)
+                .circleCrop()
                 .placeholder(R.drawable.ic_load_48dp)
                 .error(R.drawable.ic_error_load_48dp)
                 .timeout(6000)
