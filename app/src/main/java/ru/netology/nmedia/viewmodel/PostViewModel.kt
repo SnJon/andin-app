@@ -8,7 +8,14 @@ import ru.netology.nmedia.repository.*
 import ru.netology.nmedia.util.SingleLiveEvent
 
 private val empty = Post(
-    id = 0, content = "", author = "", likedByMe = false, likes = 0, published = ""
+    id = 0,
+    content = "",
+    author = "",
+    authorAvatar = "",
+    likedByMe = false,
+    likes = 0,
+    published = "",
+    attachment = emptyMap()
 )
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {

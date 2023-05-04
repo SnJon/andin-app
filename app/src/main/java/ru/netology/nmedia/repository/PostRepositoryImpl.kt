@@ -14,7 +14,6 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.Exception
 
-
 class PostRepositoryImpl : PostRepository {
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -30,7 +29,7 @@ class PostRepositoryImpl : PostRepository {
 
     override fun getAll(callback: PostRepository.PostsCallback<List<Post>>) {
         val request: Request = Request.Builder()
-            .url("${BASE_URL}/api/slow/posts")
+            .url("${BASE_URL}/api/posts")
             .build()
 
         return client.newCall(request)
@@ -61,7 +60,7 @@ class PostRepositoryImpl : PostRepository {
     override fun likeById(id: Long, callback: PostRepository.PostsCallback<Post>) {
         val request: Request = Request.Builder()
             .post(gson.toJson(id).toRequestBody(jsonType))
-            .url("${BASE_URL}/api/slow/posts/${id}/likes")
+            .url("${BASE_URL}/api/posts/${id}/likes")
             .build()
 
         return client.newCall(request)
@@ -92,7 +91,7 @@ class PostRepositoryImpl : PostRepository {
     override fun unLikeById(id: Long, callback: PostRepository.PostsCallback<Post>) {
         val request: Request = Request.Builder()
             .delete(gson.toJson(id).toRequestBody(jsonType))
-            .url("${BASE_URL}/api/slow/posts/${id}/likes")
+            .url("${BASE_URL}/api/posts/${id}/likes")
             .build()
 
         return client.newCall(request)
@@ -123,7 +122,7 @@ class PostRepositoryImpl : PostRepository {
     override fun save(post: Post, callback: PostRepository.PostsCallback<Unit>) {
         val request: Request = Request.Builder()
             .post(gson.toJson(post).toRequestBody(jsonType))
-            .url("${BASE_URL}/api/slow/posts")
+            .url("${BASE_URL}/api/posts")
             .build()
 
         client.newCall(request)
@@ -149,7 +148,7 @@ class PostRepositoryImpl : PostRepository {
     override fun removeById(id: Long, callback: PostRepository.PostsCallback<Unit>) {
         val request: Request = Request.Builder()
             .delete()
-            .url("${BASE_URL}/api/slow/posts/$id")
+            .url("${BASE_URL}/api/posts/$id")
             .build()
 
         client.newCall(request)
