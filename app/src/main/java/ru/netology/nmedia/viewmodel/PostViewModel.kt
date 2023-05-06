@@ -35,7 +35,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadPosts() {
         _data.value = FeedModel(loading = true)
-        repository.getAll(object : PostRepository.PostsCallback<List<Post>> {
+        repository.getAllAsync(object : PostRepository.Callback<List<Post>> {
             override fun onSuccess(data: List<Post>) {
                 _data.postValue(FeedModel(posts = data, empty = data.isEmpty()))
             }
@@ -49,9 +49,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun save() {
         edited.value?.let {
-            repository.save(it, object : PostRepository.PostsCallback<Unit> {
-                override fun onSuccess(data: Unit) {
-                    _postCreated.postValue(data)
+            repository.save(it, object : PostRepository.Callback<Post> {
+                override fun onSuccess(data: Post) {
+                    _postCreated.value = Unit
                 }
 
                 override fun onError(e: Exception) {
@@ -78,7 +78,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         val userActionPost = post.copy(likedByMe = !post.likedByMe)
 
         if (userActionPost.likedByMe) {
-            repository.likeById(userActionPost.id, object : PostRepository.PostsCallback<Post> {
+            repository.likeById(userActionPost.id, object : PostRepository.Callback<Post> {
                 override fun onSuccess(data: Post) {
                     updatePost(data)
                 }
@@ -88,7 +88,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 }
             })
         } else {
-            repository.unLikeById(userActionPost.id, object : PostRepository.PostsCallback<Post> {
+            repository.unLikeById(userActionPost.id, object : PostRepository.Callback<Post> {
                 override fun onSuccess(data: Post) {
                     updatePost(data)
                 }
@@ -99,7 +99,6 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             })
         }
     }
-
 
     private fun updatePost(post: Post) {
         val feedModel = _data.value
@@ -119,7 +118,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         // Оптимистичная модель
         val old = _data.value?.posts.orEmpty()
 
-        repository.removeById(id, object : PostRepository.PostsCallback<Unit> {
+        repository.removeById(id, object : PostRepository.Callback<Unit> {
             override fun onSuccess(data: Unit) {
                 _data.postValue(
                     _data.value?.copy(
