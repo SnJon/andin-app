@@ -18,6 +18,10 @@ class NewPostFragment : Fragment() {
         var Bundle.textArg: String? by StringArg
     }
 
+    private var _binding: FragmentNewPostBinding? = null
+    private val binding: FragmentNewPostBinding
+        get() = _binding!!
+
     private val viewModel: PostViewModel by activityViewModels()
 
     override fun onCreateView(
@@ -25,11 +29,12 @@ class NewPostFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = FragmentNewPostBinding.inflate(
-            inflater,
-            container,
-            false
-        )
+        _binding = FragmentNewPostBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         arguments?.textArg
             ?.let(binding.edit::setText)
@@ -43,6 +48,10 @@ class NewPostFragment : Fragment() {
             viewModel.loadPosts()
             findNavController().navigateUp()
         }
-        return binding.root
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
