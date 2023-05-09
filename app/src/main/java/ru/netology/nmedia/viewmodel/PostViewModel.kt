@@ -22,6 +22,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     // упрощённый вариант
     private val repository: PostRepository = PostRepositoryImpl()
     private val _data = MutableLiveData(FeedModel())
+    val onFailureLiveData = MutableLiveData<CRUD>()
     val data: LiveData<FeedModel>
         get() = _data
     val edited = MutableLiveData(empty)
@@ -41,9 +42,12 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             override fun onError(e: Exception) {
-                _data.postValue(FeedModel(error = true))
+                if (e.cause == null) {
+                    _data.postValue(FeedModel(error = true))
+                } else {
+                    onFailureLiveData.value = CRUD.ANY
+                }
             }
-
         })
     }
 
@@ -55,7 +59,12 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 override fun onError(e: Exception) {
-                    _data.postValue(FeedModel(error = true))
+                    if (e.cause == null) {
+                        _data.postValue(FeedModel(error = true))
+                        onFailureLiveData.value = CRUD.SAVE_ERROR
+                    } else {
+                        onFailureLiveData.value = CRUD.SAVE_FAILURE
+                    }
                 }
             })
         }
@@ -84,7 +93,11 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 override fun onError(e: Exception) {
-                    _data.postValue(FeedModel(error = true))
+                    if (e.cause == null) {
+                        _data.postValue(FeedModel(error = true))
+                    } else {
+                        onFailureLiveData.value = CRUD.ANY
+                    }
                 }
             })
         } else {
@@ -94,7 +107,11 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 override fun onError(e: Exception) {
-                    _data.postValue(FeedModel(error = true))
+                    if (e.cause == null) {
+                        _data.postValue(FeedModel(error = true))
+                    } else {
+                        onFailureLiveData.value = CRUD.ANY
+                    }
                 }
             })
         }
@@ -127,8 +144,21 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             override fun onError(e: Exception) {
-                _data.postValue(_data.value?.copy(posts = old))
+                if (e.cause == null) {
+                    _data.postValue(_data.value?.copy(posts = old))
+                    _data.postValue(FeedModel(error = true))
+                } else {
+                    onFailureLiveData.value = CRUD.ANY
+                }
             }
         })
+    }
+
+    enum class CRUD {
+        ANY,
+        SAVE_ERROR,
+        SAVE_FAILURE,
+        TRANSIT,
+        EMPTY
     }
 }

@@ -48,10 +48,31 @@ class NewPostFragment : Fragment() {
             viewModel.loadPosts()
             findNavController().navigateUp()
         }
+
+        viewModel.onFailureLiveData.observe(viewLifecycleOwner) { state ->
+
+            when (state) {
+                PostViewModel.CRUD.SAVE_ERROR -> {
+                    findNavController().navigateUp()
+                    clearLiveData()
+                }
+
+                PostViewModel.CRUD.SAVE_FAILURE -> {
+                    findNavController().navigateUp()
+                    viewModel.onFailureLiveData.value = PostViewModel.CRUD.TRANSIT
+                }
+
+                else -> {}
+            }
+        }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun clearLiveData() {
+        viewModel.onFailureLiveData.value = PostViewModel.CRUD.EMPTY
     }
 }

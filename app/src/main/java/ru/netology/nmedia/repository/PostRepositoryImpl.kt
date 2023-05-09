@@ -1,31 +1,29 @@
 package ru.netology.nmedia.repository
 
-import android.util.Log
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import ru.netology.nmedia.api.PostApi
 import ru.netology.nmedia.dto.Post
-import java.lang.RuntimeException
 
 class PostRepositoryImpl : PostRepository {
-
     override fun getAllAsync(callback: PostRepository.Callback<List<Post>>) {
         PostApi.retrofitService.getAll().enqueue(object : Callback<List<Post>> {
             override fun onResponse(
                 call: Call<List<Post>>,
                 response: Response<List<Post>>
             ) {
+
                 if (!response.isSuccessful) {
                     callback.onError(RuntimeException(response.message()))
                     return
+                } else {
+                    callback.onSuccess(response.body() ?: throw RuntimeException("body is null"))
                 }
-                callback.onSuccess(response.body() ?: throw RuntimeException("body is null"))
             }
 
             override fun onFailure(call: Call<List<Post>>, t: Throwable) {
-                Log.e("ASD", "server off")
-                callback.onError(t as Exception)
+                callback.onError(RuntimeException(t))
             }
         })
     }
@@ -44,7 +42,7 @@ class PostRepositoryImpl : PostRepository {
             }
 
             override fun onFailure(call: Call<Post>, t: Throwable) {
-                TODO("Not yet implemented")
+                callback.onError(RuntimeException(t))
             }
         })
     }
@@ -63,7 +61,7 @@ class PostRepositoryImpl : PostRepository {
             }
 
             override fun onFailure(call: Call<Post>, t: Throwable) {
-                TODO("Not yet implemented")
+                callback.onError(RuntimeException(t))
             }
         })
     }
@@ -79,7 +77,7 @@ class PostRepositoryImpl : PostRepository {
             }
 
             override fun onFailure(call: Call<Post>, t: Throwable) {
-                TODO("Not yet implemented")
+                callback.onError(RuntimeException(t))
             }
         })
     }
@@ -95,7 +93,7 @@ class PostRepositoryImpl : PostRepository {
             }
 
             override fun onFailure(call: Call<Unit>, t: Throwable) {
-                TODO("Not yet implemented")
+                callback.onError(RuntimeException(t))
             }
         })
     }
