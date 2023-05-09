@@ -21,4 +21,6 @@
     <string name="channel_remote_name">Server notifications</string>
     <string name="channel_remote_description">Notifications from remote server</string>
     <string name="description_post_image_attachment">Attachment image</string>
+    <string name="dialog_error_title">Error</string>
+    <string name="dialog_error_message">Server is not available</string>
 </resources>

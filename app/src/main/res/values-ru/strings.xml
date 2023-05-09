@@ -22,4 +22,6 @@
     <string name="channel_remote_name">Уведомления с сервера</string>
     <string name="channel_remote_description">Уведомления с удалённого сервера</string>
     <string name="description_post_image_attachment">Прикреплённое изображение</string>
+    <string name="dialog_error_title">Ошибка</string>
+    <string name="dialog_error_message">Сервер недоступен</string>
 </resources>
