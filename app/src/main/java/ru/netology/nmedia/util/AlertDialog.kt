@@ -4,7 +4,7 @@ import android.app.AlertDialog
 import android.content.Context
 import ru.netology.nmedia.R
 
-object AlarmDialog {
+object AlertDialog {
     fun showDialog(message: String, context: Context) {
         val alertDialogBuilder = AlertDialog.Builder(context)
         alertDialogBuilder.setTitle(context.getString(R.string.dialog_error_title))

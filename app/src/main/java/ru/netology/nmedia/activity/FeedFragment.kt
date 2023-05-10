@@ -15,7 +15,7 @@ import ru.netology.nmedia.adapter.OnInteractionListener
 import ru.netology.nmedia.adapter.PostsAdapter
 import ru.netology.nmedia.databinding.FragmentFeedBinding
 import ru.netology.nmedia.dto.Post
-import ru.netology.nmedia.util.AlarmDialog
+import ru.netology.nmedia.util.AlertDialog
 import ru.netology.nmedia.viewmodel.PostViewModel
 
 class FeedFragment : Fragment() {
@@ -89,7 +89,7 @@ class FeedFragment : Fragment() {
 
         viewModel.onFailureLiveData.observe(viewLifecycleOwner) { state ->
             if ((state != PostViewModel.CRUD.SAVE_ERROR) && state != PostViewModel.CRUD.EMPTY) {
-                AlarmDialog.showDialog(getString(R.string.dialog_error_message), requireContext())
+                AlertDialog.showDialog(getString(R.string.dialog_error_message), requireContext())
                 clearLiveData()
             }
         }
