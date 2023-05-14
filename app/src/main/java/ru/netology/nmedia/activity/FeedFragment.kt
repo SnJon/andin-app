@@ -111,7 +111,7 @@ class FeedFragment : Fragment() {
                     }
 
                     if (state.isNavigate) {
-                        clearLiveData()
+                        viewModel.clearErrorData()
                     }
                 }
 
@@ -145,9 +145,5 @@ class FeedFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    private fun clearLiveData() {
-        viewModel.errorData.value = ErrorModel.Unexpected(isNavigate = false)
     }
 }

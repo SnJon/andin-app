@@ -23,7 +23,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     // упрощённый вариант
     private val repository: PostRepository = PostRepositoryImpl()
     private val _data = MutableLiveData(FeedModel())
-    val errorData = MutableLiveData<ErrorModel>()
+    private val _errorData = MutableLiveData<ErrorModel>()
+    val errorData: LiveData<ErrorModel>
+        get() = _errorData
     val data: LiveData<FeedModel>
         get() = _data
     val edited = MutableLiveData(empty)
@@ -46,7 +48,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 if (e.cause == null) {
                     _data.postValue(FeedModel(error = true))
                 } else {
-                    errorData.value = ErrorModel.Unexpected(onFailure = true)
+                    _errorData.value = ErrorModel.Unexpected(onFailure = true)
                 }
             }
         })
@@ -61,9 +63,10 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
                 override fun onError(e: Exception) {
                     if (e.cause == null) {
-                        errorData.value = ErrorModel.Unexpected(isNavigate = true, onError = true)
+                        _errorData.value = ErrorModel.Unexpected(isNavigate = true, onError = true)
                     } else {
-                        errorData.value = ErrorModel.Unexpected(isNavigate = true, onFailure = true)
+                        _errorData.value =
+                            ErrorModel.Unexpected(isNavigate = true, onFailure = true)
                     }
                 }
             })
@@ -96,11 +99,11 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 override fun onError(e: Exception) {
                     _data.postValue(_data.value?.copy(posts = old))
                     if (e.cause == null) {
-                        errorData.value =
+                        _errorData.value =
                             ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onError = true)
 
                     } else {
-                        errorData.value =
+                        _errorData.value =
                             ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onFailure = true)
                     }
                 }
@@ -114,10 +117,10 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 override fun onError(e: Exception) {
 
                     if (e.cause == null) {
-                        errorData.value =
+                        _errorData.value =
                             ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onError = true)
                     } else {
-                        errorData.value =
+                        _errorData.value =
                             ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onFailure = true)
                     }
                 }
@@ -158,12 +161,16 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             override fun onError(e: Exception) {
                 if (e.cause == null) {
                     _data.postValue(_data.value?.copy(posts = old))
-                    errorData.value = ErrorModel.Unexpected(onError = true)
+                    _errorData.value = ErrorModel.Unexpected(onError = true)
 
                 } else {
-                    errorData.value = ErrorModel.Unexpected(onFailure = true)
+                    _errorData.value = ErrorModel.Unexpected(onFailure = true)
                 }
             }
         })
+    }
+
+    fun clearErrorData() {
+        _errorData.value = ErrorModel.Unexpected(isNavigate = false)
     }
 }
