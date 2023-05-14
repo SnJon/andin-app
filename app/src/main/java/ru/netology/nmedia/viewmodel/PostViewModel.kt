@@ -117,6 +117,10 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private fun getPostIndexOrNull(post: Post): Int? {
+        return _data.value?.posts.orEmpty().indexOf(post).takeIf { it >= 0 }
+    }
+
     private fun updatePost(post: Post) {
         val feedModel = _data.value
         if (feedModel?.isContentShowed() == true) {
