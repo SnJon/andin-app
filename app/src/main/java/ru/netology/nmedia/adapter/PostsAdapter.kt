@@ -33,6 +33,9 @@ class PostsAdapter(
         val post = getItem(position)
         holder.bind(post)
     }
+    fun refreshPost(postIndex: Int) {
+        notifyItemChanged(postIndex)
+    }
 }
 
 class PostViewHolder(
