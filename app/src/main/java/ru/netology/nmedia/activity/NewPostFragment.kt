@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import ru.netology.nmedia.databinding.FragmentNewPostBinding
+import ru.netology.nmedia.model.ErrorModel
 import ru.netology.nmedia.util.AndroidUtils
 import ru.netology.nmedia.util.StringArg
 import ru.netology.nmedia.viewmodel.PostViewModel
@@ -49,30 +50,16 @@ class NewPostFragment : Fragment() {
             findNavController().navigateUp()
         }
 
-        viewModel.onFailureLiveData.observe(viewLifecycleOwner) { state ->
-
-            when (state) {
-                PostViewModel.CRUD.SAVE_ERROR -> {
-                    findNavController().navigateUp()
-                    clearLiveData()
-                }
-
-                PostViewModel.CRUD.SAVE_FAILURE -> {
-                    findNavController().navigateUp()
-                    viewModel.onFailureLiveData.value = PostViewModel.CRUD.TRANSIT
-                }
-
-                else -> {}
+        viewModel.errorData.observe(viewLifecycleOwner) { state ->
+            if (state is ErrorModel.Unexpected && state.isNavigate) {
+                findNavController().navigateUp()
             }
+
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    private fun clearLiveData() {
-        viewModel.onFailureLiveData.value = PostViewModel.CRUD.EMPTY
     }
 }

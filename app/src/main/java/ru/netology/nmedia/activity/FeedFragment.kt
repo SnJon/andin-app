@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -15,6 +16,7 @@ import ru.netology.nmedia.adapter.OnInteractionListener
 import ru.netology.nmedia.adapter.PostsAdapter
 import ru.netology.nmedia.databinding.FragmentFeedBinding
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.model.ErrorModel
 import ru.netology.nmedia.util.AlertDialog
 import ru.netology.nmedia.viewmodel.PostViewModel
 
@@ -87,10 +89,55 @@ class FeedFragment : Fragment() {
             findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
         }
 
-        viewModel.onFailureLiveData.observe(viewLifecycleOwner) { state ->
-            if ((state != PostViewModel.CRUD.SAVE_ERROR) && state != PostViewModel.CRUD.EMPTY) {
-                AlertDialog.showDialog(getString(R.string.dialog_error_message), requireContext())
-                clearLiveData()
+        viewModel.errorData.observe(viewLifecycleOwner) { state ->
+
+            when (state) {
+                is ErrorModel.Unexpected -> {
+
+                    if (state.onError) {
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.toast_error_message),
+                            Toast.LENGTH_LONG
+                        )
+                            .show()
+                    }
+
+                    if (state.onFailure) {
+                        AlertDialog.showDialog(
+                            getString(R.string.dialog_error_message),
+                            requireContext()
+                        )
+                    }
+
+                    if (state.isNavigate) {
+                        clearLiveData()
+                    }
+                }
+
+                is ErrorModel.LikeUnexpected -> {
+                    state.postIndex?.let {
+                        adapter.refreshPost(it)
+                    }
+
+                    if (state.onError) {
+                        Toast.makeText(
+                            requireContext(),
+                            getString(R.string.toast_error_message),
+                            Toast.LENGTH_LONG
+                        )
+                            .show()
+                    }
+
+                    if (state.onFailure) {
+                        AlertDialog.showDialog(
+                            getString(R.string.dialog_error_message),
+                            requireContext()
+                        )
+                    }
+                }
+
+                else -> {}
             }
         }
     }
@@ -101,6 +148,6 @@ class FeedFragment : Fragment() {
     }
 
     private fun clearLiveData() {
-        viewModel.onFailureLiveData.value = PostViewModel.CRUD.EMPTY
+        viewModel.errorData.value = ErrorModel.Unexpected(isNavigate = false)
     }
 }

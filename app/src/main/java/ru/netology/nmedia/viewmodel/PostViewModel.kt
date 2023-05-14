@@ -3,6 +3,7 @@ package ru.netology.nmedia.viewmodel
 import android.app.Application
 import androidx.lifecycle.*
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.model.ErrorModel
 import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.repository.*
 import ru.netology.nmedia.util.SingleLiveEvent
@@ -22,7 +23,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     // упрощённый вариант
     private val repository: PostRepository = PostRepositoryImpl()
     private val _data = MutableLiveData(FeedModel())
-    val onFailureLiveData = MutableLiveData<CRUD>()
+    val errorData = MutableLiveData<ErrorModel>()
     val data: LiveData<FeedModel>
         get() = _data
     val edited = MutableLiveData(empty)
@@ -45,7 +46,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 if (e.cause == null) {
                     _data.postValue(FeedModel(error = true))
                 } else {
-                    onFailureLiveData.value = CRUD.ANY
+                    errorData.value = ErrorModel.Unexpected(onFailure = true)
                 }
             }
         })
@@ -60,10 +61,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
                 override fun onError(e: Exception) {
                     if (e.cause == null) {
-                        _data.postValue(FeedModel(error = true))
-                        onFailureLiveData.value = CRUD.SAVE_ERROR
+                        errorData.value = ErrorModel.Unexpected(isNavigate = true, onError = true)
                     } else {
-                        onFailureLiveData.value = CRUD.SAVE_FAILURE
+                        errorData.value = ErrorModel.Unexpected(isNavigate = true, onFailure = true)
                     }
                 }
             })
@@ -85,6 +85,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onLikeClicked(post: Post) {
         val userActionPost = post.copy(likedByMe = !post.likedByMe)
+        val old = _data.value?.posts.orEmpty()
 
         if (userActionPost.likedByMe) {
             repository.likeById(userActionPost.id, object : PostRepository.Callback<Post> {
@@ -93,10 +94,14 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 override fun onError(e: Exception) {
+                    _data.postValue(_data.value?.copy(posts = old))
                     if (e.cause == null) {
-                        _data.postValue(FeedModel(error = true))
+                        errorData.value =
+                            ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onError = true)
+
                     } else {
-                        onFailureLiveData.value = CRUD.ANY
+                        errorData.value =
+                            ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onFailure = true)
                     }
                 }
             })
@@ -107,10 +112,13 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 }
 
                 override fun onError(e: Exception) {
+
                     if (e.cause == null) {
-                        _data.postValue(FeedModel(error = true))
+                        errorData.value =
+                            ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onError = true)
                     } else {
-                        onFailureLiveData.value = CRUD.ANY
+                        errorData.value =
+                            ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onFailure = true)
                     }
                 }
             })
@@ -150,19 +158,12 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             override fun onError(e: Exception) {
                 if (e.cause == null) {
                     _data.postValue(_data.value?.copy(posts = old))
-                    _data.postValue(FeedModel(error = true))
+                    errorData.value = ErrorModel.Unexpected(onError = true)
+
                 } else {
-                    onFailureLiveData.value = CRUD.ANY
+                    errorData.value = ErrorModel.Unexpected(onFailure = true)
                 }
             }
         })
-    }
-
-    enum class CRUD {
-        ANY,
-        SAVE_ERROR,
-        SAVE_FAILURE,
-        TRANSIT,
-        EMPTY
     }
 }
