@@ -15,7 +15,7 @@ private val empty = Post(
     likedByMe = false,
     likes = 0,
     published = "",
-    attachment = emptyMap()
+    attachment = null
 )
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
