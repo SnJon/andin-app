@@ -3,6 +3,7 @@ package ru.netology.nmedia.viewmodel
 import android.app.Application
 import androidx.lifecycle.*
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.model.ErrorModel
 import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.repository.*
 import ru.netology.nmedia.util.SingleLiveEvent
@@ -15,13 +16,16 @@ private val empty = Post(
     likedByMe = false,
     likes = 0,
     published = "",
-    attachment = emptyMap()
+    attachment = null
 )
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
     // упрощённый вариант
     private val repository: PostRepository = PostRepositoryImpl()
     private val _data = MutableLiveData(FeedModel())
+    private val _errorData = MutableLiveData<ErrorModel>()
+    val errorData: LiveData<ErrorModel>
+        get() = _errorData
     val data: LiveData<FeedModel>
         get() = _data
     val edited = MutableLiveData(empty)
@@ -35,27 +39,35 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun loadPosts() {
         _data.value = FeedModel(loading = true)
-        repository.getAll(object : PostRepository.PostsCallback<List<Post>> {
+        repository.getAllAsync(object : PostRepository.Callback<List<Post>> {
             override fun onSuccess(data: List<Post>) {
                 _data.postValue(FeedModel(posts = data, empty = data.isEmpty()))
             }
 
             override fun onError(e: Exception) {
-                _data.postValue(FeedModel(error = true))
+                if (e.cause == null) {
+                    _data.postValue(FeedModel(error = true))
+                } else {
+                    _errorData.value = ErrorModel.Unexpected(onFailure = true)
+                }
             }
-
         })
     }
 
     fun save() {
         edited.value?.let {
-            repository.save(it, object : PostRepository.PostsCallback<Unit> {
-                override fun onSuccess(data: Unit) {
-                    _postCreated.postValue(data)
+            repository.save(it, object : PostRepository.Callback<Post> {
+                override fun onSuccess(data: Post) {
+                    _postCreated.value = Unit
                 }
 
                 override fun onError(e: Exception) {
-                    _data.postValue(FeedModel(error = true))
+                    if (e.cause == null) {
+                        _errorData.value = ErrorModel.Unexpected(isNavigate = true, onError = true)
+                    } else {
+                        _errorData.value =
+                            ErrorModel.Unexpected(isNavigate = true, onFailure = true)
+                    }
                 }
             })
         }
@@ -76,30 +88,49 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun onLikeClicked(post: Post) {
         val userActionPost = post.copy(likedByMe = !post.likedByMe)
+        val old = _data.value?.posts.orEmpty()
 
         if (userActionPost.likedByMe) {
-            repository.likeById(userActionPost.id, object : PostRepository.PostsCallback<Post> {
+            repository.likeById(userActionPost.id, object : PostRepository.Callback<Post> {
                 override fun onSuccess(data: Post) {
                     updatePost(data)
                 }
 
                 override fun onError(e: Exception) {
-                    _data.postValue(FeedModel(error = true))
+                    _data.postValue(_data.value?.copy(posts = old))
+                    if (e.cause == null) {
+                        _errorData.value =
+                            ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onError = true)
+
+                    } else {
+                        _errorData.value =
+                            ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onFailure = true)
+                    }
                 }
             })
         } else {
-            repository.unLikeById(userActionPost.id, object : PostRepository.PostsCallback<Post> {
+            repository.unLikeById(userActionPost.id, object : PostRepository.Callback<Post> {
                 override fun onSuccess(data: Post) {
                     updatePost(data)
                 }
 
                 override fun onError(e: Exception) {
-                    _data.postValue(FeedModel(error = true))
+
+                    if (e.cause == null) {
+                        _errorData.value =
+                            ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onError = true)
+                    } else {
+                        _errorData.value =
+                            ErrorModel.LikeUnexpected(getPostIndexOrNull(post), onFailure = true)
+                    }
                 }
             })
         }
     }
 
+    private fun getPostIndexOrNull(post: Post): Int? {
+        return _data.value?.posts.orEmpty().indexOf(post).takeIf { it >= 0 }
+    }
 
     private fun updatePost(post: Post) {
         val feedModel = _data.value
@@ -119,7 +150,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         // Оптимистичная модель
         val old = _data.value?.posts.orEmpty()
 
-        repository.removeById(id, object : PostRepository.PostsCallback<Unit> {
+        repository.removeById(id, object : PostRepository.Callback<Unit> {
             override fun onSuccess(data: Unit) {
                 _data.postValue(
                     _data.value?.copy(
@@ -128,8 +159,18 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             override fun onError(e: Exception) {
-                _data.postValue(_data.value?.copy(posts = old))
+                if (e.cause == null) {
+                    _data.postValue(_data.value?.copy(posts = old))
+                    _errorData.value = ErrorModel.Unexpected(onError = true)
+
+                } else {
+                    _errorData.value = ErrorModel.Unexpected(onFailure = true)
+                }
             }
         })
+    }
+
+    fun clearErrorData() {
+        _errorData.value = ErrorModel.Unexpected(isNavigate = false)
     }
 }

@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import ru.netology.nmedia.databinding.FragmentNewPostBinding
+import ru.netology.nmedia.model.ErrorModel
 import ru.netology.nmedia.util.AndroidUtils
 import ru.netology.nmedia.util.StringArg
 import ru.netology.nmedia.viewmodel.PostViewModel
@@ -18,6 +19,10 @@ class NewPostFragment : Fragment() {
         var Bundle.textArg: String? by StringArg
     }
 
+    private var _binding: FragmentNewPostBinding? = null
+    private val binding: FragmentNewPostBinding
+        get() = _binding!!
+
     private val viewModel: PostViewModel by activityViewModels()
 
     override fun onCreateView(
@@ -25,11 +30,12 @@ class NewPostFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding = FragmentNewPostBinding.inflate(
-            inflater,
-            container,
-            false
-        )
+        _binding = FragmentNewPostBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         arguments?.textArg
             ?.let(binding.edit::setText)
@@ -43,6 +49,17 @@ class NewPostFragment : Fragment() {
             viewModel.loadPosts()
             findNavController().navigateUp()
         }
-        return binding.root
+
+        viewModel.errorData.observe(viewLifecycleOwner) { state ->
+            if (state is ErrorModel.Unexpected && state.isNavigate) {
+                findNavController().navigateUp()
+            }
+
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

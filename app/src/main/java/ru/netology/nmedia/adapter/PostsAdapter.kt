@@ -12,7 +12,7 @@ import ru.netology.nmedia.R
 import ru.netology.nmedia.databinding.CardPostBinding
 import ru.netology.nmedia.dto.Post
 
-const val BASE_URL = "http://10.0.2.2:9999"
+private const val BASE_URL = "http://192.168.43.82:9999"
 
 interface OnInteractionListener {
     fun onLike(post: Post) {}
@@ -32,6 +32,9 @@ class PostsAdapter(
     override fun onBindViewHolder(holder: PostViewHolder, position: Int) {
         val post = getItem(position)
         holder.bind(post)
+    }
+    fun refreshPost(postIndex: Int) {
+        notifyItemChanged(postIndex)
     }
 }
 
