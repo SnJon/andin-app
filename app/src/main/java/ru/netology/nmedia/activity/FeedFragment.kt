@@ -56,94 +56,10 @@ class FeedFragment : Fragment() {
                 viewModel.removeById(post.id)
             }
 
-            override fun onShare(post: Post) {
-                val intent = Intent().apply {
-                    action = Intent.ACTION_SEND
-                    putExtra(Intent.EXTRA_TEXT, post.content)
-                    type = "text/plain"
+                override fun onShare(post: Post) {
+                    context?.shareText(getString(R.string.chooser_share_post), post.content)
                 }
-
-                val shareIntent =
-                    Intent.createChooser(intent, getString(R.string.chooser_share_post))
-                startActivity(shareIntent)
             }
-        })
-        binding.list.adapter = adapter
-        viewModel.data.observe(viewLifecycleOwner) { state ->
-            adapter.submitList(state.posts)
-            binding.progress.isVisible = state.loading
-            binding.errorGroup.isVisible = state.error
-            binding.emptyText.isVisible = state.empty
-        }
-
-        binding.retryButton.setOnClickListener {
-            viewModel.loadPosts()
-        }
-
-        binding.refresh.setOnRefreshListener {
-            viewModel.loadPosts()
-            binding.refresh.isRefreshing = false
-        }
-
-        binding.fab.setOnClickListener {
-            findNavController().navigate(R.id.action_feedFragment_to_newPostFragment)
-        }
-
-        viewModel.errorData.observe(viewLifecycleOwner) { state ->
-
-            when (state) {
-                is ErrorModel.Unexpected -> {
-
-                    if (state.onError) {
-                        Toast.makeText(
-                            requireContext(),
-                            getString(R.string.toast_error_message),
-                            Toast.LENGTH_LONG
-                        )
-                            .show()
-                    }
-
-                    if (state.onFailure) {
-                        AlertDialog.showDialog(
-                            getString(R.string.dialog_error_message),
-                            requireContext()
-                        )
-                    }
-
-                    if (state.isNavigate) {
-                        viewModel.clearErrorData()
-                    }
-                }
-
-                is ErrorModel.LikeUnexpected -> {
-                    state.postIndex?.let {
-                        adapter.refreshPost(it)
-                    }
-
-                    if (state.onError) {
-                        Toast.makeText(
-                            requireContext(),
-                            getString(R.string.toast_error_message),
-                            Toast.LENGTH_LONG
-                        )
-                            .show()
-                    }
-
-                    if (state.onFailure) {
-                        AlertDialog.showDialog(
-                            getString(R.string.dialog_error_message),
-                            requireContext()
-                        )
-                    }
-                }
-
-                else -> {}
-            }
-        }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+        )
     }
 }

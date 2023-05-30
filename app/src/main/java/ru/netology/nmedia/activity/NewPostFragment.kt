@@ -43,7 +43,7 @@ class NewPostFragment : Fragment() {
         binding.ok.setOnClickListener {
             viewModel.changeContent(binding.edit.text.toString())
             viewModel.save()
-            AndroidUtils.hideKeyboard(requireView())
+            view.hideKeyboard()
         }
         viewModel.postCreated.observe(viewLifecycleOwner) {
             viewModel.loadPosts()
