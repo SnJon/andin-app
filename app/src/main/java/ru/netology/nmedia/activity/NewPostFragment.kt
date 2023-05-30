@@ -8,9 +8,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import ru.netology.nmedia.databinding.FragmentNewPostBinding
-import ru.netology.nmedia.model.ErrorModel
-import ru.netology.nmedia.util.AndroidUtils
 import ru.netology.nmedia.util.StringArg
+import ru.netology.nmedia.util.hideKeyboard
 import ru.netology.nmedia.viewmodel.PostViewModel
 
 class NewPostFragment : Fragment() {
@@ -45,16 +44,10 @@ class NewPostFragment : Fragment() {
             viewModel.save()
             view.hideKeyboard()
         }
-        viewModel.postCreated.observe(viewLifecycleOwner) {
+
+        viewModel.navigateToFeedCommand.observe(viewLifecycleOwner) {
             viewModel.loadPosts()
             findNavController().navigateUp()
-        }
-
-        viewModel.errorData.observe(viewLifecycleOwner) { state ->
-            if (state is ErrorModel.Unexpected && state.isNavigate) {
-                findNavController().navigateUp()
-            }
-
         }
     }
 
