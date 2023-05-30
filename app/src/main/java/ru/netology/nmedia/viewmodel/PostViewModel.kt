@@ -64,10 +64,27 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             try {
-                repository.save(editedPost!!)
+                if (editedPost!!.saved) {
+                    repository.save(editedPost)
+                } else {
+                    val lastPostId = dbPostLiveData.value?.first()?.id
+                    if (lastPostId != null) {
+                        repository.save(editedPost.copy(id = (lastPostId + 1000)))
+                    }
+                }
                 _navigateToFeedCommand.value = Unit
             } catch (e: Exception) {
                 _navigateToFeedCommand.value = Unit
+                _feedErrorEvent.value = FeedErrorEvent()
+            }
+        }
+    }
+
+    fun saveExist(post: Post) {
+        viewModelScope.launch {
+            try {
+                repository.save(post)
+            } catch (e: Exception) {
                 _feedErrorEvent.value = FeedErrorEvent()
             }
         }

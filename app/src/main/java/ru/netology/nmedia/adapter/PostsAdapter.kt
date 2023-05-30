@@ -18,6 +18,7 @@ interface OnInteractionListener {
     fun onEdit(post: Post) {}
     fun onRemove(post: Post) {}
     fun onShare(post: Post) {}
+    fun onRetrySave(post: Post) {}
 }
 
 class PostsAdapter(
@@ -49,6 +50,14 @@ class PostViewHolder(
             content.text = post.content
             like.isChecked = post.likedByMe
             like.text = "${post.likes}"
+
+            if (post.saved) {
+                menu.visibility = View.VISIBLE
+                retrySave.visibility = View.GONE
+            } else {
+                menu.visibility = View.GONE
+                retrySave.visibility = View.VISIBLE
+            }
 
             val avatarUrl = "${BASE_URL}/avatars/${post.authorAvatar}"
 
@@ -99,6 +108,10 @@ class PostViewHolder(
 
             share.setOnClickListener {
                 onInteractionListener.onShare(post)
+            }
+
+            retrySave.setOnClickListener {
+                onInteractionListener.onRetrySave(post)
             }
         }
     }

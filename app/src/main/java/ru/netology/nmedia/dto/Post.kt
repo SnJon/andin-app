@@ -8,6 +8,7 @@ data class Post(
     val published: String,
     val likedByMe: Boolean,
     val likes: Int = 0,
+    val saved: Boolean = false,
     val attachment: Map<String, String>? = null
 ) {
     companion object {
@@ -21,6 +22,7 @@ data class Post(
                 likedByMe = false,
                 likes = 0,
                 published = "",
+                saved = false,
                 attachment = null
             )
         }

@@ -1,6 +1,7 @@
 package ru.netology.nmedia.repository
 
 import androidx.lifecycle.map
+import retrofit2.Response
 import ru.netology.nmedia.api.PostApi
 import ru.netology.nmedia.api.PostApiService
 import ru.netology.nmedia.dao.PostDao
@@ -34,7 +35,11 @@ class PostRepositoryImpl(
             }
 
             val body = response.body() ?: throw ApiError(response.code(), response.message())
-            dao.insert(body.toEntity())
+            val updatedPosts = body.map { post ->
+                post.copy(saved = true)
+            }
+
+            dao.insert(updatedPosts.toEntity())
 
         } catch (e: IOException) {
             throw NetworkError
@@ -82,13 +87,24 @@ class PostRepositoryImpl(
     }
 
     override suspend fun save(post: Post) {
+        val response: Response<Post>
         try {
-            val response = apiService.save(post)
+            response = if (post.saved.not()) {
+                dao.insert(PostEntity.fromDto(post))
+                apiService.save(post.copy(id = 0))
+            } else {
+                apiService.save(post)
+            }
+
             if (!response.isSuccessful) {
                 throw ApiError(response.code(), response.message())
             }
             val body = response.body() ?: throw ApiError(response.code(), response.message())
-            dao.insert(PostEntity.fromDto(body))
+            val updatePost = body.copy(saved = true)
+
+            dao.removeById(post.id)
+            dao.insert(PostEntity.fromDto(updatePost))
+
         } catch (e: IOException) {
             throw NetworkError
         } catch (e: Exception) {

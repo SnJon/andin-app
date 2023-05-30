@@ -126,6 +126,10 @@ class FeedFragment : Fragment() {
                 override fun onShare(post: Post) {
                     context?.shareText(getString(R.string.chooser_share_post), post.content)
                 }
+
+                override fun onRetrySave(post: Post) {
+                    viewModel.saveExist(post)
+                }
             }
         )
     }
