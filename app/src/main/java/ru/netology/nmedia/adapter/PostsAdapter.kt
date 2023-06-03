@@ -8,17 +8,17 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import ru.netology.nmedia.BuildConfig.BASE_URL
 import ru.netology.nmedia.R
 import ru.netology.nmedia.databinding.CardPostBinding
 import ru.netology.nmedia.dto.Post
-
-private const val BASE_URL = "http://192.168.43.82:9999"
 
 interface OnInteractionListener {
     fun onLike(post: Post) {}
     fun onEdit(post: Post) {}
     fun onRemove(post: Post) {}
     fun onShare(post: Post) {}
+    fun onRetrySave(post: Post) {}
 }
 
 class PostsAdapter(
@@ -50,6 +50,14 @@ class PostViewHolder(
             content.text = post.content
             like.isChecked = post.likedByMe
             like.text = "${post.likes}"
+
+            if (post.saved) {
+                menu.visibility = View.VISIBLE
+                retrySave.visibility = View.GONE
+            } else {
+                menu.visibility = View.GONE
+                retrySave.visibility = View.VISIBLE
+            }
 
             val avatarUrl = "${BASE_URL}/avatars/${post.authorAvatar}"
 
@@ -100,6 +108,10 @@ class PostViewHolder(
 
             share.setOnClickListener {
                 onInteractionListener.onShare(post)
+            }
+
+            retrySave.setOnClickListener {
+                onInteractionListener.onRetrySave(post)
             }
         }
     }

@@ -1,16 +1,16 @@
 package ru.netology.nmedia.repository
 
+import androidx.lifecycle.LiveData
 import ru.netology.nmedia.dto.Post
 
 interface PostRepository {
-    fun getAllAsync(callback: Callback<List<Post>>)
-    fun likeById(id: Long, callback: Callback<Post>)
-    fun unLikeById(id: Long, callback: Callback<Post>)
-    fun save(post: Post, callback: Callback<Post>)
-    fun removeById(id: Long, callback: Callback<Unit>)
+    val dbPostsLiveData: LiveData<List<Post>>
 
-    interface Callback<T> {
-        fun onSuccess(data: T) {}
-        fun onError(e: Exception) {}
-    }
+    suspend fun loadPostsFromServer()
+    suspend fun getPosts(): List<Post>
+    suspend fun likeById(id: Long)
+    suspend fun unLikeById(id: Long)
+    suspend fun save(post: Post)
+    suspend fun removeById(id: Long)
+
 }

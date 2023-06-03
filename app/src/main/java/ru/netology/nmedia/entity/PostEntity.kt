@@ -3,7 +3,6 @@ package ru.netology.nmedia.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import ru.netology.nmedia.dto.Post
-import ru.netology.nmedia.util.MapConverter
 
 @Entity
 data class PostEntity(
@@ -15,14 +14,17 @@ data class PostEntity(
     val published: String,
     val likedByMe: Boolean,
     val likes: Int = 0,
-    val attachment: String
+    val saved: Boolean = false
 ) {
-    fun toDto() = Post(id, author, authorAvatar, content, published, likedByMe, likes, MapConverter.fromString(attachment))
+    fun toDto() = Post(id, author, authorAvatar, content, published, likedByMe, likes, saved)
 
     companion object {
         fun fromDto(dto: Post) =
-            PostEntity(dto.id, dto.author, dto.authorAvatar, dto.content, dto.published, dto.likedByMe, dto.likes, MapConverter.fromStringMap(dto.attachment)
-            )
+            PostEntity(dto.id, dto.author, dto.authorAvatar, dto.content, dto.published, dto.likedByMe, dto.likes, dto.saved)
     }
 }
+
+fun List<PostEntity>.toDto(): List<Post> = map(PostEntity::toDto)
+fun List<Post>.toEntity(): List<PostEntity> = map(PostEntity::fromDto)
+
 
