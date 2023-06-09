@@ -18,6 +18,7 @@ import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.model.FeedErrorEvent
 import ru.netology.nmedia.model.FeedModelState
 import ru.netology.nmedia.util.shareText
+import ru.netology.nmedia.util.visibleOrGone
 import ru.netology.nmedia.viewmodel.PostViewModel
 
 class FeedFragment : Fragment() {
@@ -54,8 +55,13 @@ class FeedFragment : Fragment() {
     private fun bindViews() {
         binding.apply {
             list.adapter = postsAdapter
-            refresh.setOnRefreshListener { viewModel.loadPosts() }
+            refresh.setOnRefreshListener {
+                viewModel.showRecentPosts()
+            }
             fab.setOnClickListener { findNavController().navigate(R.id.action_feedFragment_to_newPostFragment) }
+            updateRecent.setOnClickListener {
+                viewModel.showRecentPosts()
+            }
         }
     }
 
@@ -74,6 +80,14 @@ class FeedFragment : Fragment() {
             if (errorState == null) return@observe
 
             showError(errorState)
+        }
+
+        viewModel.newerCountLiveData.observe(viewLifecycleOwner) {
+            viewModel.updateNewerCount(it)
+        }
+
+        viewModel.postLoadedEvent.observe(viewLifecycleOwner) {
+            binding.refresh.isRefreshing = false
         }
     }
 
@@ -96,11 +110,16 @@ class FeedFragment : Fragment() {
         binding.apply {
             refresh.isRefreshing = false
             progress.isVisible = false
-            emptyText.isVisible = state.isEmpty()
-            list.isVisible = state.isEmpty().not()
+            emptyText.visibleOrGone(state.isEmpty())
+            list.visibleOrGone(state.isEmpty().not())
+            updateRecent.visibleOrGone(state.newerCount > 0)
 
             if (state.isEmpty().not()) {
-                postsAdapter.submitList(state.posts)
+                postsAdapter.submitList(state.posts) {
+                    if (state.isScrollToTopNeeded) {
+                        list.scrollToPosition(0)
+                    }
+                }
             }
         }
     }

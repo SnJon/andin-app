@@ -24,4 +24,5 @@
     <string name="dialog_error_title">Error</string>
     <string name="dialog_error_message">Server is not available</string>
     <string name="toast_error_message">Internal Server Error</string>
+    <string name="recent_entries">Recent entries</string>
 </resources>

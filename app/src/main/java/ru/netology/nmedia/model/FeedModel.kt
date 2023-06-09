@@ -6,7 +6,8 @@ sealed interface FeedModelState {
 
     data class Content(
         val posts: List<Post> = emptyList(),
-        val error: FeedErrorEvent? = null
+        val newerCount: Int = 0,
+        val isScrollToTopNeeded: Boolean = false
     ) : FeedModelState {
 
         fun isEmpty() = posts.isEmpty()
@@ -18,3 +19,7 @@ sealed interface FeedModelState {
 data class FeedErrorEvent(
     val itemIndex: Int? = null
 )
+
+fun FeedModelState.getContentOrNull(): FeedModelState.Content? {
+    return this as? FeedModelState.Content
+}

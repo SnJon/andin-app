@@ -21,3 +21,7 @@ fun Context.shareText(title: String, text: String) {
         Intent.createChooser(intent, title)
     startActivity(shareIntent)
 }
+
+fun View.visibleOrGone(condition: Boolean) {
+    visibility = if (condition) View.VISIBLE else View.GONE
+}
