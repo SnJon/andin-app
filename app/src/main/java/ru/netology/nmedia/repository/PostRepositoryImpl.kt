@@ -18,7 +18,10 @@ class PostRepositoryImpl(
     private val dao: PostDao,
     private val apiService: PostApiService = PostApi.service
 ) : PostRepository {
-    override val dbPostsLiveData = dao.getAll().map(List<PostEntity>::toDto)
+
+    override val dbPostsLiveData = dao.getAll()
+        .map(List<PostEntity>::toDto)
+        .flowOn(Dispatchers.Default)
 
 
     override suspend fun getPosts(): List<Post> {

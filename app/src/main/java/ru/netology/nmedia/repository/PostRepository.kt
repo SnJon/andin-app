@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import ru.netology.nmedia.dto.Post
 
 interface PostRepository {
-    val dbPostsLiveData: LiveData<List<Post>>
+    val dbPostsLiveData: Flow<List<Post>>
 
     suspend fun loadPostsFromServer()
     suspend fun getPosts(): List<Post>

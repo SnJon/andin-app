@@ -21,7 +21,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: PostRepository =
         PostRepositoryImpl(AppDb.getInstance(context = application).postDao())
 
-    val dbPostLiveData = repository.dbPostsLiveData
+    val dbPostLiveData = repository.dbPostsLiveData.asLiveData(Dispatchers.Default)
+
+    // Feed fragment states start //
 
     private val _feedState = MutableLiveData<FeedModelState>(FeedModelState.Loading)
     val feedState: LiveData<FeedModelState> = _feedState
