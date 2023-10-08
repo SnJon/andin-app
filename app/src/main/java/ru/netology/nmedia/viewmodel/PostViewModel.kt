@@ -4,13 +4,18 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import ru.netology.nmedia.db.AppDb
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.dto.isNullOrEmpty
 import ru.netology.nmedia.model.FeedErrorEvent
 import ru.netology.nmedia.model.FeedModelState
+import ru.netology.nmedia.model.getContentOrNull
 import ru.netology.nmedia.repository.PostRepository
 import ru.netology.nmedia.repository.PostRepositoryImpl
 import ru.netology.nmedia.util.SingleLiveEvent
@@ -21,7 +26,9 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: PostRepository =
         PostRepositoryImpl(AppDb.getInstance(context = application).postDao())
 
-    val dbPostLiveData = repository.dbPostsLiveData
+    val dbPostLiveData = repository.dbPostsLiveData.asLiveData(Dispatchers.Default)
+
+    // Feed fragment states start //
 
     private val _feedState = MutableLiveData<FeedModelState>(FeedModelState.Loading)
     val feedState: LiveData<FeedModelState> = _feedState
@@ -30,12 +37,31 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     val feedErrorEvent: LiveData<FeedErrorEvent>
         get() = _feedErrorEvent
 
-    private val _navigateToFeedCommand = SingleLiveEvent<Unit>()
+    private val _postsLoadedEvent = MutableLiveData<Unit>()
 
+    val postLoadedEvent: LiveData<Unit>
+        get() = _postsLoadedEvent
+
+    private var isScrollToTopNeeded = false
+
+
+    // Feed fragment states end //
+
+    // New Post fragment states start //
+
+    private val _navigateToFeedCommand = SingleLiveEvent<Unit>()
     val navigateToFeedCommand: LiveData<Unit>
         get() = _navigateToFeedCommand
 
     private val newPostState = MutableLiveData(Post.empty())
+
+    val newerCountLiveData: LiveData<Int> = dbPostLiveData.switchMap {
+        repository.getNewerCount()
+            .catch { e -> e.printStackTrace() }
+            .asLiveData(Dispatchers.Default)
+    }
+
+    // New Post fragment states end //
 
     init {
         loadPosts()
@@ -45,7 +71,8 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     fun loadPosts() {
         viewModelScope.launch {
             try {
-                repository.loadPostsFromServer()
+                repository.loadPostsFromServer(false)
+                _postsLoadedEvent.value = Unit
             } catch (e: Exception) {
                 _feedErrorEvent.value = FeedErrorEvent()
             }
@@ -53,7 +80,23 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateContentState(posts: List<Post>) {
-        _feedState.value = FeedModelState.Content(posts)
+        _feedState.value = FeedModelState.Content(
+            posts = posts,
+            isScrollToTopNeeded = isScrollToTopNeeded
+        )
+        isScrollToTopNeeded = false
+    }
+
+    fun updateNewerCount(newerCount: Int) {
+        val content = _feedState.value?.getContentOrNull()
+        viewModelScope.launch {
+            _feedState.postValue(
+                FeedModelState.Content(
+                    posts = content?.posts.orEmpty(),
+                    newerCount = newerCount
+                )
+            )
+        }
     }
 
     fun save() {
@@ -133,6 +176,18 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: Exception) {
                 _feedErrorEvent.value = FeedErrorEvent()
             }
+        }
+    }
+
+    fun showRecentPosts() {
+        val newerPostsCount = (_feedState.value as? FeedModelState.Content)?.newerCount ?: 0
+        if (newerPostsCount > 0) {
+            isScrollToTopNeeded = true
+            viewModelScope.launch {
+                repository.showHiddenPosts()
+            }
+        } else {
+            loadPosts()
         }
     }
 
