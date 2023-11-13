@@ -149,6 +149,11 @@ class FeedFragment : Fragment() {
                 override fun onRetrySave(post: Post) {
                     viewModel.saveExist(post)
                 }
+
+                override fun onOpenImage(url: String) {
+                    findNavController().navigate(R.id.action_feedFragment_to_imageFragment,
+                        Bundle().apply { textArg = url })
+                }
             }
         )
     }
