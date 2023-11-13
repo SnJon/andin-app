@@ -1,6 +1,7 @@
 package ru.netology.nmedia.viewmodel
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -11,14 +12,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import ru.netology.nmedia.db.AppDb
+import ru.netology.nmedia.dto.MediaUpload
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.dto.isNullOrEmpty
 import ru.netology.nmedia.model.FeedErrorEvent
 import ru.netology.nmedia.model.FeedModelState
+import ru.netology.nmedia.model.PhotoModel
 import ru.netology.nmedia.model.getContentOrNull
 import ru.netology.nmedia.repository.PostRepository
 import ru.netology.nmedia.repository.PostRepositoryImpl
 import ru.netology.nmedia.util.SingleLiveEvent
+import java.io.File
 
 
 class PostViewModel(application: Application) : AndroidViewModel(application) {
@@ -49,6 +53,8 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     // New Post fragment states start //
 
+    private val noPhoto = PhotoModel()
+
     private val _navigateToFeedCommand = SingleLiveEvent<Unit>()
     val navigateToFeedCommand: LiveData<Unit>
         get() = _navigateToFeedCommand
@@ -60,6 +66,10 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             .catch { e -> e.printStackTrace() }
             .asLiveData(Dispatchers.Default)
     }
+
+    private val _photo = MutableLiveData(noPhoto)
+    val photo: LiveData<PhotoModel>
+        get() = _photo
 
     // New Post fragment states end //
 
@@ -105,14 +115,19 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
         if (editedPost.isNullOrEmpty()) return
 
+        val lastPostId = dbPostLiveData.value?.first()?.id
+        val newPost = if (editedPost!!.saved) editedPost else {
+            lastPostId?.let {
+                editedPost.copy(id = (lastPostId + 1000))
+            }
+        }
+
         viewModelScope.launch {
             try {
-                if (editedPost!!.saved) {
-                    repository.save(editedPost)
-                } else {
-                    val lastPostId = dbPostLiveData.value?.first()?.id
-                    if (lastPostId != null) {
-                        repository.save(editedPost.copy(id = (lastPostId + 1000)))
+                when (_photo.value) {
+                    noPhoto -> repository.save(newPost!!)
+                    else -> _photo.value?.file?.let { file ->
+                        repository.saveWithAttachment(newPost!!, MediaUpload(file))
                     }
                 }
                 _navigateToFeedCommand.value = Unit
@@ -121,6 +136,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
                 _feedErrorEvent.value = FeedErrorEvent()
             }
         }
+        _photo.value = noPhoto
     }
 
     fun saveExist(post: Post) {
@@ -143,6 +159,10 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         newPostState.value = newPostState.value?.copy(content = text)
+    }
+
+    fun changePhoto(uri: Uri?, file: File?) {
+        _photo.value = PhotoModel(uri, file)
     }
 
     fun onLikeClicked(post: Post) {

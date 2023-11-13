@@ -1,5 +1,7 @@
 package ru.netology.nmedia.dto
 
+import ru.netology.nmedia.enumeration.AttachmentType
+
 data class Post(
     val id: Long,
     val author: String,
@@ -10,7 +12,7 @@ data class Post(
     val likes: Int = 0,
     val saved: Boolean = false,
     val hidden: Boolean = false,
-    val attachment: Map<String, String>? = null
+    val attachment: Attachment? = null
 ) {
     companion object {
 
@@ -29,6 +31,11 @@ data class Post(
         }
     }
 }
+
+data class Attachment(
+    val url: String,
+    val type: AttachmentType
+)
 
 fun Post?.isNullOrEmpty(): Boolean {
     return this == null || this == Post.empty()
