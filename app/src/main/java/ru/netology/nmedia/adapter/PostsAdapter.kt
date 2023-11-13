@@ -19,6 +19,7 @@ interface OnInteractionListener {
     fun onRemove(post: Post) {}
     fun onShare(post: Post) {}
     fun onRetrySave(post: Post) {}
+    fun onOpenImage(url: String) {}
 }
 
 class PostsAdapter(
@@ -33,6 +34,7 @@ class PostsAdapter(
         val post = getItem(position)
         holder.bind(post)
     }
+
     fun refreshPost(postIndex: Int) {
         notifyItemChanged(postIndex)
     }
@@ -70,7 +72,7 @@ class PostViewHolder(
                 .into(avatar)
 
             if (post.attachment != null) {
-                val imageUrl = "${BASE_URL}/images/${post.attachment["url"]}"
+                val imageUrl = "${BASE_URL}/media/${post.attachment.url}"
                 Glide.with(image.context)
                     .load(imageUrl)
                     .timeout(6000)
@@ -79,6 +81,10 @@ class PostViewHolder(
                 image.visibility = View.VISIBLE
             } else {
                 image.visibility = View.GONE
+            }
+
+            image.setOnClickListener {
+                post.attachment?.let { attachment -> onInteractionListener.onOpenImage(attachment.url) }
             }
 
             menu.setOnClickListener {
