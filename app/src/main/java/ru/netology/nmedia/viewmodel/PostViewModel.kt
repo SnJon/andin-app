@@ -9,8 +9,12 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.switchMap
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import ru.netology.nmedia.auth.AppAuth
 import ru.netology.nmedia.db.AppDb
 import ru.netology.nmedia.dto.MediaUpload
 import ru.netology.nmedia.dto.Post
@@ -30,7 +34,15 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     private val repository: PostRepository =
         PostRepositoryImpl(AppDb.getInstance(context = application).postDao())
 
-    val dbPostLiveData = repository.dbPostsLiveData.asLiveData(Dispatchers.Default)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val dbPostLiveData = AppAuth.getInstance()
+        .data
+        .flatMapLatest { token ->
+            repository.dbPostsLiveData
+                .map { posts ->
+                    posts.map { it.copy(ownedByMe = it.authorId == token?.id) }
+                }
+        }.asLiveData(Dispatchers.Default)
 
     // Feed fragment states start //
 

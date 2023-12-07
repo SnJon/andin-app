@@ -34,4 +34,12 @@
         <item name="android:minHeight">@dimen/icon_button_min_size</item>
     </style>
 
+    <style name="style_title_large">
+        <item name="android:textSize">32sp</item>
+    </style>
+
+    <style name="style_button">
+        <item name="android:textSize">14sp</item>
+    </style>
+
 </resources>

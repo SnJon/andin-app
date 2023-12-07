@@ -30,4 +30,13 @@
     <string name="description_select_photo">Выбрать фото</string>
     <string name="description_take_photo">Сделать фото</string>
     <string name="description_photo">Фото</string>
+    <string name="sign_in">Вход</string>
+    <string name="sign_up">Регистрация</string>
+    <string name="sign_out">Выход</string>
+    <string name="authorization_view_authorization">Авторизация</string>
+    <string name="authorization_view_login_hint">Логин</string>
+    <string name="authorization_view_mandatory_field">Обязательное поле</string>
+    <string name="authorization_view_password_hint">Пароль</string>
+    <string name="authorization_view_continue">Продолжить без авторизации</string>
+    <string name="authorization_view_wrong_text">Неверный логин или пароль</string>
 </resources>
