@@ -29,4 +29,13 @@
     <string name="description_select_photo">Select photo</string>
     <string name="description_take_photo">Take photo</string>
     <string name="description_photo">Photo</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="authorization_view_authorization">Authorization</string>
+    <string name="authorization_view_login_hint">Login</string>
+    <string name="authorization_view_mandatory_field">Mandatory field</string>
+    <string name="authorization_view_password_hint">Password</string>
+    <string name="authorization_view_continue">Continue without authorization</string>
+    <string name="authorization_view_wrong_text">Wrong login or password</string>
 </resources>

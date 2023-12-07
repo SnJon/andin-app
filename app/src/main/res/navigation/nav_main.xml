@@ -32,4 +32,10 @@
         android:name="ru.netology.nmedia.activity.ImageFragment"
         android:label="fragment_image"
         tools:layout="@layout/fragment_image"/>
+
+    <fragment
+        android:id="@+id/authFragment"
+        android:name="ru.netology.nmedia.activity.AuthFragment"
+        android:label="fragment_auth"
+        tools:layout="@layout/fragment_auth"/>
 </navigation>
