@@ -14,12 +14,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.MenuProvider
 import androidx.navigation.findNavController
 import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
-import com.google.firebase.messaging.FirebaseMessaging
 import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nmedia.R
 import ru.netology.nmedia.activity.NewPostFragment.Companion.textArg
 import ru.netology.nmedia.auth.AppAuth
+import ru.netology.nmedia.service.di.FirebaseMessagingProvider
+import ru.netology.nmedia.service.di.GoogleApiAvailabilityProvider
 import ru.netology.nmedia.viewmodel.AuthViewModel
 import javax.inject.Inject
 
@@ -27,6 +27,12 @@ import javax.inject.Inject
 class AppActivity : AppCompatActivity(R.layout.activity_app) {
     @Inject
     lateinit var appAuth: AppAuth
+
+    @Inject
+    lateinit var googleApiAvailability: GoogleApiAvailabilityProvider
+
+    @Inject
+    lateinit var firebaseMessaging: FirebaseMessagingProvider
 
     private val viewModel: AuthViewModel by viewModels()
 
@@ -116,7 +122,7 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
     }
 
     private fun checkGoogleApiAvailability() {
-        with(GoogleApiAvailability.getInstance()) {
+        with(googleApiAvailability) {
             val code = isGooglePlayServicesAvailable(this@AppActivity)
             if (code == ConnectionResult.SUCCESS) {
                 return@with
@@ -129,7 +135,7 @@ class AppActivity : AppCompatActivity(R.layout.activity_app) {
                 .show()
         }
 
-        FirebaseMessaging.getInstance().token.addOnSuccessListener {
+        firebaseMessaging.getToken().addOnSuccessListener {
             println(it)
         }
     }
