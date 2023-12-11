@@ -137,9 +137,12 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 when (_photo.value) {
-                    noPhoto -> repository.save(newPost!!)
-                    else -> _photo.value?.file?.let { file ->
-                        repository.saveWithAttachment(newPost!!, MediaUpload(file))
+                    noPhoto -> {
+                        repository.save(newPost!!)
+                    }
+
+                    else -> _photo.value?.uri?.let { uri ->
+                        repository.saveWithAttachment(newPost!!, MediaUpload(uri.toFile()))
                     }
                 }
                 _navigateToFeedCommand.value = Unit
@@ -173,8 +176,8 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         newPostState.value = newPostState.value?.copy(content = text)
     }
 
-    fun changePhoto(uri: Uri?, file: File?) {
-        _photo.value = PhotoModel(uri, file)
+    fun changePhoto(uri: Uri?) {
+        _photo.value = PhotoModel(uri)
     }
 
     fun onLikeClicked(post: Post) {

@@ -66,7 +66,7 @@ class NewPostFragment : Fragment() {
 
                     Activity.RESULT_OK -> {
                         val uri: Uri? = it.data?.data
-                        viewModel.changePhoto(uri, uri?.toFile())
+                        viewModel.changePhoto(uri)
                     }
                 }
             }
@@ -94,7 +94,7 @@ class NewPostFragment : Fragment() {
         }
 
         binding.removePhoto.setOnClickListener {
-            viewModel.changePhoto(null, null)
+            viewModel.changePhoto(null)
         }
 
         viewModel.photo.observe(viewLifecycleOwner) {
