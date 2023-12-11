@@ -9,7 +9,6 @@ interface PostRepository {
     val dbPostsLiveData: Flow<List<Post>>
 
     suspend fun loadPostsFromServer(isSilent: Boolean)
-    suspend fun getPosts(): List<Post>
     suspend fun likeById(id: Long)
     suspend fun unLikeById(id: Long)
     suspend fun save(post: Post)

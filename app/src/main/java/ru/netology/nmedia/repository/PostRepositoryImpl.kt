@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import retrofit2.Response
-import ru.netology.nmedia.api.PostApi
 import ru.netology.nmedia.api.PostApiService
 import ru.netology.nmedia.dao.PostDao
 import ru.netology.nmedia.dto.Attachment
@@ -26,23 +26,17 @@ import ru.netology.nmedia.error.AppError
 import ru.netology.nmedia.error.NetworkError
 import ru.netology.nmedia.error.UnknownError
 import java.io.IOException
+import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
-class PostRepositoryImpl(
+class PostRepositoryImpl @Inject constructor(
     private val dao: PostDao,
-    private val apiService: PostApiService = PostApi.service
+    private val apiService: PostApiService
 ) : PostRepository {
 
     override val dbPostsLiveData = dao.getAll()
         .map(List<PostEntity>::toDto)
         .flowOn(Dispatchers.Default)
-
-
-    override suspend fun getPosts(): List<Post> {
-        return dao.getPosts().map {
-            it.toDto()
-        }
-    }
 
     override fun getNewerCount(): Flow<Int> {
         return flow {
@@ -59,96 +53,103 @@ class PostRepositoryImpl(
 
 
     override suspend fun loadPostsFromServer(isSilent: Boolean) {
-        try {
-            val lastPostId = dao.getLastPostId() ?: 0
-            val response = if (lastPostId <= 0) {
-                apiService.getAll()
-            } else {
-                apiService.getNewer(lastPostId)
+        withContext(Dispatchers.IO) {
+            try {
+                val lastPostId = dao.getLastPostId() ?: 0
+                val response = if (lastPostId <= 0) {
+                    apiService.getAll()
+                } else {
+                    apiService.getNewer(lastPostId)
+                }
+
+                if (!response.isSuccessful) {
+                    throw ApiError(response.code(), response.message())
+                }
+
+                val body = response.body() ?: throw ApiError(response.code(), response.message())
+                val updatedPosts = body.map { post ->
+                    post.copy(
+                        saved = true,
+                        hidden = isSilent
+                    )
+                }
+
+                dao.insert(updatedPosts.toEntity())
+
+            } catch (e: IOException) {
+                throw NetworkError
+
+            } catch (e: Exception) {
+                throw UnknownError
             }
-
-            if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
-            }
-
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
-            val updatedPosts = body.map { post ->
-                post.copy(
-                    saved = true,
-                    hidden = isSilent
-                )
-            }
-
-            dao.insert(updatedPosts.toEntity())
-
-        } catch (e: IOException) {
-            throw NetworkError
-
-        } catch (e: Exception) {
-            throw UnknownError
         }
     }
 
 
     override suspend fun likeById(id: Long) {
-        try {
-            val response = PostApi.service.likeById(id)
+        withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.likeById(id)
 
-            if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                if (!response.isSuccessful) {
+                    throw ApiError(response.code(), response.message())
+                }
+
+                val body = response.body() ?: throw ApiError(response.code(), response.message())
+                dao.insert(PostEntity.fromDto(body.copy(saved = true)))
+
+            } catch (e: IOException) {
+                throw NetworkError
+            } catch (e: Exception) {
+                throw UnknownError
             }
-
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
-            dao.insert(PostEntity.fromDto(body.copy(saved = true)))
-
-        } catch (e: IOException) {
-            throw NetworkError
-        } catch (e: Exception) {
-            throw UnknownError
         }
     }
 
     override suspend fun unLikeById(id: Long) {
-        try {
-            val response = apiService.unLikeById(id)
+        withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.unLikeById(id)
 
-            if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                if (!response.isSuccessful) {
+                    throw ApiError(response.code(), response.message())
+                }
+
+                val body = response.body() ?: throw ApiError(response.code(), response.message())
+                dao.insert(PostEntity.fromDto(body.copy(saved = true)))
+
+            } catch (e: IOException) {
+                throw NetworkError
+            } catch (e: Exception) {
+                throw UnknownError
             }
-
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
-            dao.insert(PostEntity.fromDto(body.copy(saved = true)))
-
-        } catch (e: IOException) {
-            throw NetworkError
-        } catch (e: Exception) {
-            throw UnknownError
         }
     }
 
     override suspend fun save(post: Post) {
         val response: Response<Post>
-        try {
-            response = if (post.saved.not()) {
-                dao.insert(PostEntity.fromDto(post))
-                apiService.save(post.copy(id = 0))
-            } else {
-                apiService.save(post)
+        withContext(Dispatchers.IO) {
+            try {
+                response = if (post.saved.not()) {
+                    dao.insert(PostEntity.fromDto(post))
+                    apiService.save(post.copy(id = 0))
+                } else {
+                    apiService.save(post)
+                }
+
+                if (!response.isSuccessful) {
+                    throw ApiError(response.code(), response.message())
+                }
+                val body = response.body() ?: throw ApiError(response.code(), response.message())
+                val updatePost = body.copy(saved = true)
+                dao.removeById(post.id)
+                dao.insert(PostEntity.fromDto(updatePost))
+
+            } catch (e: IOException) {
+                throw NetworkError
+            } catch (e: Exception) {
+                throw UnknownError
             }
-
-            if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
-            }
-            val body = response.body() ?: throw ApiError(response.code(), response.message())
-            val updatePost = body.copy(saved = true)
-
-            dao.removeById(post.id)
-            dao.insert(PostEntity.fromDto(updatePost))
-
-        } catch (e: IOException) {
-            throw NetworkError
-        } catch (e: Exception) {
-            throw UnknownError
         }
     }
 
@@ -173,7 +174,7 @@ class PostRepositoryImpl(
                 "file", upload.file.name, upload.file.asRequestBody()
             )
 
-            val response = PostApi.service.upload(media)
+            val response = apiService.upload(media)
             if (!response.isSuccessful) {
                 throw ApiError(response.code(), response.message())
             }
@@ -187,17 +188,19 @@ class PostRepositoryImpl(
     }
 
     override suspend fun removeById(id: Long) {
-        try {
-            val response = apiService.removeById(id)
+        withContext(Dispatchers.IO) {
+            try {
+                val response = apiService.removeById(id)
 
-            if (!response.isSuccessful) {
-                throw ApiError(response.code(), response.message())
+                if (!response.isSuccessful) {
+                    throw ApiError(response.code(), response.message())
+                }
+                dao.removeById(id)
+            } catch (e: IOException) {
+                throw NetworkError
+            } catch (e: Exception) {
+                throw UnknownError
             }
-            dao.removeById(id)
-        } catch (e: IOException) {
-            throw NetworkError
-        } catch (e: Exception) {
-            throw UnknownError
         }
     }
 
