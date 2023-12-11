@@ -7,10 +7,12 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import dagger.hilt.android.AndroidEntryPoint
 import ru.netology.nmedia.BuildConfig
 import ru.netology.nmedia.databinding.FragmentImageBinding
 import ru.netology.nmedia.util.StringArg
 
+@AndroidEntryPoint
 class ImageFragment : Fragment() {
 
     companion object {
